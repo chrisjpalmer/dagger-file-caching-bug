@@ -37,10 +37,10 @@ func (m *MyModuleTests) TestMyModule(
 		errg.Go(func() error {
 
 			// produces the bug
-			// return dag.MyModule().ExpectFileContents(gctx, variant, fixtures.File(variant))
+			return dag.MyModule().ExpectFileContents(gctx, variant, fixtures.File(variant))
 
 			// does not produce the bug
-			return dag.MyModule().ExpectFileContents(gctx, variant, dag.File(variant, variant))
+			// return dag.MyModule().ExpectFileContents(gctx, variant, dag.File(variant, variant))
 		})
 	}
 
