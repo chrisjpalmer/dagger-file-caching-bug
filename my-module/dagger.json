@@ -1,0 +1,8 @@
+{
+  "name": "my-module",
+  "engineVersion": "v0.19.8",
+  "sdk": {
+    "source": "go"
+  },
+  "disableDefaultFunctionCaching": true
+}
