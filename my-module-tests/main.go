@@ -28,23 +28,41 @@ func (m *MyModuleTests) TestMyModule(
 	ctx context.Context,
 	// +defaultPath="/my-module-tests/fixtures"
 	fixtures *dagger.Directory,
-) error {
+) (string, error) {
 	errg, gctx := errgroup.WithContext(ctx)
 
 	variants := []string{"a", "b", "c", "d", "e", "f"}
+
+	c := make(chan string, len(variants))
+	defer close(c)
 
 	for _, variant := range variants {
 		errg.Go(func() error {
 
 			// produces the bug
-			// return dag.MyModule().ExpectFileContents(gctx, variant, fixtures.File(variant))
+			result, err := dag.MyModule().ExpectFileContents(gctx, variant, fixtures.File(variant))
+			if err != nil {
+				return err
+			}
 
+			c <- result
+
+			return nil
 			// does not produce the bug
-			return dag.MyModule().ExpectFileContents(gctx, variant, dag.File(variant, variant))
+			// return dag.MyModule().ExpectFileContents(gctx, variant, dag.File(variant, variant))
 		})
 	}
 
-	return errg.Wait()
+	if err := errg.Wait(); err != nil {
+		return "", err
+	}
+
+	var result string
+	for range variants {
+		result += "\n" + <-c
+	}
+
+	return result, nil
 }
 
 // doesn't produce the bug
@@ -57,7 +75,7 @@ func (m *MyModuleTests) TestMyModuleSeries(
 	variants := []string{"a", "b", "c", "d", "e", "f"}
 
 	for _, variant := range variants {
-		err := dag.MyModule().ExpectFileContents(ctx, variant, fixtures.File(variant))
+		_, err := dag.MyModule().ExpectFileContents(ctx, variant, fixtures.File(variant))
 		if err != nil {
 			return err
 		}
